@@ -101,6 +101,16 @@ interface IBuyer {
 - `phone: string` - строковое поле с телефоном клиента.
 - `address: string` - строковое поле с адресом клиента.
 
+#### Способ оплаты
+
+Тип для способа оплаты
+
+```typescript
+type TPayment = 'card' | 'cash' | '';
+```
+
+Текстовое поле, содержит одно из 3 вариантов.
+
 ### Модели данных
 
 #### Класс Catalog
@@ -109,14 +119,14 @@ interface IBuyer {
 
 *Поля класса:*
 - `items: IProduct[]` — массив товаров.
-- `currentItem: IProduct` — товар, выбранный для детального просмотра.
+- `currentItem: IProduct | null` — товар, выбранный для детального просмотра.
 
 *Методы:*
 - `saveProducts(products: IProduct[]): void` — сохраняет массив товаров.
 - `getProducts(): IProduct[]` — возвращает массив товаров.
-- `getProductById(id: string): IProduct` — возвращает товар по ID.
+- `getProductById(id: string): IProduct | undefined` — возвращает товар по ID.
 - `setCurrentProduct(product: IProduct): void` — сохраняет товар для детального просмотра.
-- `getCurrentProduct(): IProduct` — возвращает товар для детального просмотра.
+- `getCurrentProduct(): IProduct | null` — возвращает товар для детального просмотра.
 
 #### Класс Cart
 
@@ -145,7 +155,7 @@ interface IBuyer {
 - `address: string` — адрес доставки.
 
 *Методы:*
-- `saveData(data: Partial<IBuyer>): void` — сохраняет данные покупателя.
+- `saveData(data: IBuyer): void` — сохраняет данные покупателя.
 - `getData(): IBuyer` — возвращает все данные покупателя.
 - `clearData(): void` — очищает данные покупателя.
 - `validate(): boolean` — выполняет валидацию данных.
