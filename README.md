@@ -111,6 +111,48 @@ type TPayment = 'card' | 'cash' | '';
 
 Текстовое поле, содержит одно из 3 вариантов.
 
+#### Список товаров
+
+Интерфейс списка товаров, получаемых с сервера:
+
+```typescript
+interface IProducts {
+  total: number;
+  items: IProduct[];
+}
+```
+
+*Поля интерфейса:*
+- `total: number` - числовое поле, содержит кол-во полученных с сервера товаров.
+- `items: IProduct[]` - поле типа массив `IProduct`, содержит список товаров, полученных с сервера.
+
+#### Заказ
+
+Интерфейс заказа, отправляемого на сервер:
+
+```typescript
+interface IOrderRequest extends IBuyer {
+  items: IProduct[];
+}
+```
+
+*Поля интерфейса:*
+Большую часть полей наследует из интерфейса `IBuyer`.
+- `items: IProduct[]` - поле типа массив `IProduct`, содержит список товаров, оформленных покупателем.
+
+#### Статус оформления заказа
+
+Интерфейс ответа сервера по оформленному покупателем заказу:
+
+```typescript
+interface IOrderResponse {
+  totalPrice: number;
+}
+```
+
+*Поля интерфейса:*
+- `totalPrice: number` - числовое поле, содержит общее кол-во списанных синапсов.
+
 ### Модели данных
 
 #### Класс Catalog
@@ -204,3 +246,22 @@ type TPayment = 'card' | 'cash' | '';
 - `on<T extends object>(event: EventName, callback: (data: T) => void): void` - подписка на событие, принимает название события и функцию обработчик.  
 - `emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
 - `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
+
+### Слой коммуникации
+
+#### Класс ApiClient
+
+Отвечает за коммуникацию с API сервера, используя базовый класс `Api`.
+
+*Конструктор класса:*
+
+```typescript
+constructor(baseUrl: string, options: RequestInit = {})
+```
+
+- `baseUrl: string` - базовый URL адрес API сервера.
+- `options: RequestInit` - опциональные настройки запросов.
+
+*Методы класса:*
+- `getProductList(): Promise<IProducts>` - GET запрос, возвращает массив товаров.
+- `createOrder(orderData: IOrderRequest): Promise<OrderResponse>` - POST запрос, отправляет данные заказа.
