@@ -1,3 +1,5 @@
+import { IValidErrors } from '../types/index';
+
 export function pascalToKebab(value: string): string {
     return value.replace(/([a-z0–9])([A-Z])/g, "$1-$2").toLowerCase();
 }
@@ -135,4 +137,11 @@ export function createElement<
         }
     }
     return element;
+}
+
+// Добавляем функцию вывода ошибок при валидации полей Customer
+export function showValidErrors(data: IValidErrors): void {
+  Object.entries(data).forEach(item => {
+    console.log(`Поле ${item[0]}: `, item[1]);
+  });
 }

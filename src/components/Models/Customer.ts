@@ -1,3 +1,5 @@
+import { TPayment, IBuyer, IValidErrors, IValidResult } from '../../types/index';
+
 export class Customer {
   private payment: TPayment = '';
   private email: string = '';
@@ -35,23 +37,39 @@ export class Customer {
     this.address = '';
   }
 
-  validate(data: Partial<IBuyer>): boolean {
+  validate(data: Partial<IBuyer>): IValidResult {
     let isValid = true;
+    const errors: IValidErrors = {};
 
-    if (data.payment)
-      isValid = isValid && (data.payment === 'card' || data.payment === 'cash');
-
-    if (data.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      isValid = isValid && emailRegex.test(data.email);
+    if (data.payment !== undefined) {
+      if (data.payment !== 'card' && data.payment !== 'cash') {
+        errors.payment = 'Неверный способ оплаты';
+        isValid = false;
+      }
     }
 
-    if (data.phone)
-      isValid = isValid && (data.phone.replace(/\D/g, '').length >= 10);
+    if (data.email !== undefined) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(data.email)) {
+        errors.email = 'Неверный формат email';
+        isValid = false;
+      }
+    }
 
-    if (data.address)
-      isValid = isValid && data.address.trim().length > 5;
+    if (data.phone !== undefined) {
+      if (data.phone.replace(/\D/g, '').length < 10) {
+        errors.phone = 'Телефон должен содержать не менее 10 цифр';
+        isValid = false;
+      }
+    }
 
-    return isValid;
+    if (data.address !== undefined) {
+      if (data.address.trim().length <= 5) {
+        errors.address = 'Адрес должен содержать более 5 символов';
+        isValid = false;
+      }
+    }
+
+    return { isValid, errors };
   }
 }

@@ -1,4 +1,5 @@
 import { Api } from '../base/Api';
+import { IApi, IProducts, IOrderRequest, IOrderResponse } from '../../types/index';
 
 export class ApiClient {
   private api: IApi;
@@ -17,7 +18,7 @@ export class ApiClient {
     }
   }
 
-  async createOrder(orderData: IOrderRequest): Promise<OrderResponse> {
+  async createOrder(orderData: IOrderRequest): Promise<IOrderResponse> {
     try {
       const response = await this.api.post('/order/', orderData);
       return response as IOrderResponse;

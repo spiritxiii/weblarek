@@ -153,6 +153,40 @@ interface IOrderResponse {
 *Поля интерфейса:*
 - `totalPrice: number` - числовое поле, содержит общее кол-во списанных синапсов.
 
+#### Ошибки валидации
+
+Интерфейс, содержащий список полей с ошибками:
+
+```typescript
+export interface IValidErrors {
+  payment?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+}
+```
+
+*Поля интерфейса:*
+- `payment?: string` - строковое поле, содержит ошибку валидации способа оплаты, может отсутствовать, если необходима частичная проверка данных.
+- `email?: string` - строковое поле, содержит ошибку валидации email клиента, может отсутствовать, если необходима частичная проверка данных.
+- `phone?: string` - строковое поле, содержит ошибку валидации телефона клиента, может отсутствовать, если необходима частичная проверка данных.
+- `address?: string` - строковое поле, содержит ошибку валидации адреса клиента, может отсутствовать, если необходима частичная проверка данных.
+
+#### Результат валидации
+
+Интерфейс, содержащий итоговый статус проверки валидации (true или false), а также список полей с ошибками, если они есть:
+
+```typescript
+export interface IValidResult {
+  isValid: boolean;
+  errors: IValidErrors;
+}
+```
+
+*Поля интерфейса:*
+- `isValid: boolean` - поле логического типа, содержит итоговый результат валидации.
+- `errors: IValidErrors` - поле типа IValidErrors, содержит список полей, в которых допущена ошибка.
+
 ### Модели данных
 
 #### Класс Catalog
@@ -200,7 +234,7 @@ interface IOrderResponse {
 - `saveData(data: IBuyer): void` — сохраняет данные покупателя.
 - `getData(): IBuyer` — возвращает все данные покупателя.
 - `clearData(): void` — очищает данные покупателя.
-- `validate(): boolean` — выполняет валидацию данных.
+- `validate(data: Partial<IBuyer>): IValidResult` — выполняет валидацию данных, возвращает результат проверки.
 
 ### Базовый код
 
@@ -264,4 +298,4 @@ constructor(baseUrl: string, options: RequestInit = {})
 
 *Методы класса:*
 - `getProductList(): Promise<IProducts>` - GET запрос, возвращает массив товаров.
-- `createOrder(orderData: IOrderRequest): Promise<OrderResponse>` - POST запрос, отправляет данные заказа.
+- `createOrder(orderData: IOrderRequest): Promise<IOrderResponse>` - POST запрос, отправляет данные заказа.

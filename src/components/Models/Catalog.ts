@@ -1,3 +1,5 @@
+import { IProduct } from '../../types/index';
+
 export class Catalog {
   private items: IProduct[] = [];
   private currentItem: IProduct | null = null;

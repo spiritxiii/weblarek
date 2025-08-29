@@ -35,3 +35,15 @@ export interface IOrderRequest extends IBuyer {
 export interface IOrderResponse {
   totalPrice: number;
 }
+
+export interface IValidErrors {
+  payment?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+}
+
+export interface IValidResult {
+  isValid: boolean;
+  errors: IValidErrors;
+}
