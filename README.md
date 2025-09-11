@@ -299,3 +299,162 @@ constructor(baseUrl: string, options: RequestInit = {})
 *Методы класса:*
 - `getProductList(): Promise<IProducts>` - GET запрос, возвращает массив товаров.
 - `createOrder(orderData: IOrderRequest): Promise<IOrderResponse>` - POST запрос, отправляет данные заказа.
+
+### Слой представления
+
+Слой представления отвечает за отображение данных и взаимодействие с пользователем.
+
+#### Класс Card
+
+Базовый класс для всех типов карточек товаров, предоставляющий основной набор методов.
+
+*Методы класса:*
+- `setCategory(category: string): void` - установка категории товара.
+- `setTitle(title: string): void` - установка названия товара.
+- `setImage(src: string, alt: string): void` - установка изображения товара.
+- `setPrice(price: number): void` - установка цены товара.
+
+#### Класс CardCatalog
+
+Карточка товара в каталоге. Наследуется от Card<IProduct>.
+
+*Селекторы:*
+- `.card__category` - элемент категории товара.
+- `.card__title` - элемент названия товара.
+- `.card__image` - элемент изображения товара.
+- `.card__price` - элемент цены товара.
+
+*Методы класса:*
+- `setButtonHandler(handler: (event: MouseEvent) => void): void` - установка обработчика клика на карточку.
+
+#### Класс CardPreview
+
+Карточка товара в режиме предпросмотра. Наследуется от Card<IProduct>.
+
+*Селекторы:*
+- `.card__category` - элемент категории товара.
+- `.card__title` - элемент названия товара.
+- `.card__image` - элемент изображения товара.
+- `.card__price` - элемент цены товара.
+- `.card__text` - элемент описания товара.
+- `.card__button` - кнопка "В корзину".
+
+*Методы:*
+- `setDescription(description: string): void` - установка описания товара.
+- `setButtonHandler(handler: (event: MouseEvent) => void): void` - установка обработчика кнопки "В корзину".
+
+#### Класс CardBasket
+
+Карточка товара в корзине. Наследуется от Card<IProduct>.
+
+*Селекторы:*
+- `.card__title` - элемент названия товара.
+- `.card__price` - элемент цены товара.
+- `.basket__item-delete` - кнопка удаления товара.
+
+*Методы:*
+- `setIndex(index: number): void` - установка порядкового номера товара.
+- `setDeleteHandler(handler: (event: MouseEvent) => void): void` - установка обработчика удаления товара.
+
+#### Класс Form
+
+Базовый класс для всех форм, предоставляющий основной набор методов.
+
+*Методы:*
+- `setSubmitHandler(handler: (data: T) => void): void` - установка обработчика отправки формы.
+- `setInputHandler(handler: (field: keyof T, value: string) => void): void` - установка обработчика изменения полей.
+- `setValidations(errors: Partial<Record<keyof T, string>>): void` - установка ошибок валидации.
+- `setButtonState(disabled: boolean): void` - установка состояния кнопки отправки.
+- `getData(): T` - получение данных формы.
+
+#### Класс OrderForm
+
+Форма оформления заказа (способ оплаты и адрес). Наследует от Form<Partial<IBuyer>>.
+
+*Селекторы:*
+- `[name="card"]` - кнопка "Онлайн" оплаты.
+- `[name="cash"]` - кнопка "При получении" оплаты.
+- `[name="address"]` - поле ввода адреса.
+- `.form__errors` - контейнер для ошибок.
+
+*Методы:*
+- `setPaymentMethod(method: TPayment): void` - установка способа оплаты.
+- `setAddress(address: string): void` - установка адреса доставки.
+
+#### Класс ContactsForm
+
+Форма контактных данных. Наследует от Form<Partial<IBuyer>>.
+
+*Селекторы:*
+- `[name="email"]` - поле ввода email.
+- `[name="phone"]` - поле ввода телефона.
+- `.form__errors` - контейнер для ошибок.
+
+*Методы:*
+- `setEmail(email: string): void` - установка email.
+- `setPhone(phone: string): void` - установка телефона.
+
+#### Класс BasketView
+
+Представление корзины товаров.
+
+*Селекторы:*
+- `.basket__list` - список товаров в корзине.
+- `.basket__price` - элемент общей стоимости.
+- `.basket__button` - кнопка оформления заказа.
+
+*Методы:*
+- `setItems(items: IProduct[]): void` - установка списка товаров.
+- `setTotalPrice(price: number): void` - установка общей стоимости.
+- `setOrderHandler(handler: (event: MouseEvent) => void): void` - установка обработчика оформления заказа.
+
+#### Класс SuccessView
+
+Представление успешного оформления заказа.
+
+*Селекторы:*
+- `.order-success__title` - заголовок успешного оформления.
+- `.order-success__description` - описание с суммой заказа.
+- `.order-success__close` - кнопка закрытия.
+
+*Методы:*
+- `setTotalPrice(price: number): void` - установка суммы заказа.
+- `setCloseHandler(handler: (event: MouseEvent) => void): void` - установка обработчика закрытия.
+
+#### Класс GalleryView
+
+Представление галереи товаров.
+
+*Селекторы:*
+- `.gallery` - контейнер галереи.
+
+*Методы:*
+- `setProducts(products: IProduct[]): void` - установка списка товаров.
+- `setProductClickHandler(handler: (product: IProduct) => void): void` - установка обработчика клика на товар.
+
+#### Класс HeaderView
+
+Представление шапки сайта.
+
+*Селекторы:*
+- `.header__basket` - кнопка корзины.
+- `.header__basket-counter` - счетчик товаров в корзине.
+
+*Методы:*
+- `setBasketCount(count: number): void` - установка счетчика корзины.
+- `setBasketClickHandler(handler: (event: MouseEvent) => void): void` - установка обработчика клика на корзину.
+
+#### Класс ModalView
+
+Управление модальным окном. Не наследуется, самостоятельный компонент.
+
+*Селекторы:*
+- `#modal-container` - контейнер модального окна.
+- `.modal__close` - кнопка закрытия модального окна.
+- `.modal__content` - контейнер содержимого модального окна.
+
+*Методы:*
+- `open(content: HTMLElement): void` - открытие модального окна с содержимым.
+- `close(): void` - закрытие модального окна.
+- `setCloseHandler(handler: (event: MouseEvent) => void): void` - установка обработчика закрытия.
+- `clearContent(): void` - очистка содержимого модального окна.
