@@ -115,7 +115,11 @@ if (basketButton) {
 
 initializeApp();
 
-// Загрузка товаров при старте приложения
+/**
+ * Инициализирует приложение, загружая товары с сервера или используя локальные данные
+ * @async
+ * @returns {Promise<void>}
+ */
 async function initializeApp(): Promise<void> {
   try {
     console.log('Загрузка товаров с сервера...');
@@ -128,7 +132,10 @@ async function initializeApp(): Promise<void> {
   }
 }
 
-// Функция отображения корзины
+/**
+ * Отображает корзину товаров в модальном окне
+ * @returns {void}
+ */
 function showBasket(): void {
   const basketTemplate = document.getElementById('basket');
   if (!(basketTemplate instanceof HTMLTemplateElement)) {
@@ -161,7 +168,12 @@ function showBasket(): void {
   modal.open(basketElement);
 }
 
-// Функция показа формы
+/**
+ * Отображает форму (оформления заказа или контактов) в модальном окне
+ * @param {string} templateName - имя шаблона формы ('order' или 'contacts')
+ * @param {(keyof IBuyer)[]} [customerParams] - параметры покупателя для валидации
+ * @returns {void}
+ */
 function showForm(templateName: string, customerParams?: (keyof IBuyer)[]): void {
   const element = getTemplate(templateName, '.form');
   const form = getInstance(templateName, element);
@@ -210,7 +222,12 @@ function showForm(templateName: string, customerParams?: (keyof IBuyer)[]): void
   modal.open(element);
 }
 
-// Функция установки введенных ранее пользователем значений в форму
+/**
+ * Восстанавливает ранее введенные пользователем данные в форму
+ * @param {OrderForm | ContactsForm} form - экземпляр формы
+ * @param {Partial<IBuyer>} customer - данные покупателя
+ * @returns {void}
+ */
 function restoreFormData(form: OrderForm | ContactsForm, customer: Partial<IBuyer>): void {
   if (form instanceof OrderForm) { // Определяем родительский класс
     // используем логическое И для красоты
@@ -224,7 +241,13 @@ function restoreFormData(form: OrderForm | ContactsForm, customer: Partial<IBuye
   }
 }
 
-// Функция для получения шаблона формы
+/**
+ * Получает DOM-элемент формы из шаблона
+ * @param {string} templateName - имя шаблона
+ * @param {string} classname - CSS-класс элемента формы
+ * @returns {HTMLElement} DOM-элемент формы
+ * @throws {Error} Если шаблон или элемент не найдены
+ */
 function getTemplate(templateName: string, classname: string): HTMLElement {
   const template = document.getElementById(templateName);
   if (!(template instanceof HTMLTemplateElement)) {
@@ -240,7 +263,12 @@ function getTemplate(templateName: string, classname: string): HTMLElement {
   return element;
 }
 
-// получаем инстанс класса слоя View
+/**
+ * Создает экземпляр класса формы на основе имени шаблона
+ * @param {string} templateName - имя шаблона ('order' или 'contacts')
+ * @param {HTMLElement} orderElement - DOM-элемент формы
+ * @returns {OrderForm | ContactsForm} экземпляр класса формы
+ */
 function getInstance(templateName: string, orderElement: HTMLElement): OrderForm | ContactsForm {
   switch(templateName) {
     case 'order':
@@ -250,7 +278,13 @@ function getInstance(templateName: string, orderElement: HTMLElement): OrderForm
   }
 }
 
-// Функция отправки заказа на сервер
+/**
+ * Отправляет заказ на сервер и обрабатывает результат
+ * @async
+ * @param {Customer} customerModel - модель покупателя с данными для заказа
+ * @param {Cart} cartModel - модель корзины с товарами
+ * @returns {Promise<void>}
+ */
 async function sendOrder(customerModel: Customer, cartModel: Cart): Promise<void> {
   try {
     const orderData: IOrderRequest = {
@@ -271,7 +305,11 @@ async function sendOrder(customerModel: Customer, cartModel: Cart): Promise<void
   }
 }
 
-// Функция показа успешного оформления
+/**
+ * Отображает экран успешного оформления заказа
+ * @param {number} total - общая сумма заказа
+ * @returns {void}
+ */
 function showSuccess(total: number): void {
   const successElement = getTemplate('success', '.order-success');
   const successView = new SuccessView(successElement);
