@@ -29,11 +29,13 @@ export interface IProducts {
 }
 
 export interface IOrderRequest extends IBuyer {
-  items: IProduct[];
+  items: string[];
+  total: number;
 }
 
 export interface IOrderResponse {
-  totalPrice: number;
+  id: string;
+  total: number;
 }
 
 export interface IValidErrors {
@@ -46,4 +48,7 @@ export interface IValidErrors {
 export interface IValidResult {
   isValid: boolean;
   errors: IValidErrors;
+  data: Partial<IBuyer>;
 }
+
+export type TProductCategory = 'софт-скил' | 'хард-скил' | 'кнопка' | 'дополнительное' | 'другое';

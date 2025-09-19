@@ -131,14 +131,16 @@ interface IProducts {
 Интерфейс заказа, отправляемого на сервер:
 
 ```typescript
-interface IOrderRequest extends IBuyer {
-  items: IProduct[];
+export interface IOrderRequest extends IBuyer {
+  items: string[];
+  total: number;
 }
 ```
 
 *Поля интерфейса:*
 Большую часть полей наследует из интерфейса `IBuyer`.
-- `items: IProduct[]` - поле типа массив `IProduct`, содержит список товаров, оформленных покупателем.
+- `items: string[]` - поле типа массив строк, содержит список id товаров, оформленных покупателем.
+- `total: number` - числовое поле с общей стоимостью корзины.
 
 #### Статус оформления заказа
 
@@ -146,12 +148,14 @@ interface IOrderRequest extends IBuyer {
 
 ```typescript
 interface IOrderResponse {
-  totalPrice: number;
+  id: string;
+  total: number;
 }
 ```
 
 *Поля интерфейса:*
-- `totalPrice: number` - числовое поле, содержит общее кол-во списанных синапсов.
+- `id: string` - строковое поле, содержит идентификатор заказа.
+- `total: number` - числовое поле, содержит общее кол-во списанных синапсов.
 
 #### Ошибки валидации
 
@@ -180,12 +184,24 @@ export interface IValidErrors {
 export interface IValidResult {
   isValid: boolean;
   errors: IValidErrors;
+  data: Partial<IBuyer>;
 }
 ```
 
 *Поля интерфейса:*
 - `isValid: boolean` - поле логического типа, содержит итоговый результат валидации.
 - `errors: IValidErrors` - поле типа IValidErrors, содержит список полей, в которых допущена ошибка.
+- `data: Partial<IBuyer>` - поле типа IBuyer, которое может содержит не полный список полей, отправленных на валидацию.
+
+#### Категория товара
+
+Тип для категории товара.
+
+```typescript
+type type TProductCategory = 'софт-скил' | 'хард-скил' | 'кнопка' | 'дополнительное' | 'другое';
+```
+
+Текстовое поле, содержит одно значение из 4 вариантов.
 
 ### Модели данных
 
@@ -193,9 +209,19 @@ export interface IValidResult {
 
 Отвечает за хранение и управление всеми доступными товарами в магазине.
 
+*Конструктор класса:*
+```typescript
+constructor(eventBroker: EventEmitter) {
+    this.eventBroker = eventBroker;
+  }
+```
+
+- `eventBroker: EventEmitter` - принимает инстанс брокера событий.
+
 *Поля класса:*
 - `items: IProduct[]` — массив товаров.
 - `currentItem: IProduct | null` — товар, выбранный для детального просмотра.
+- `eventBroker: EventEmitter` — брокер событий.
 
 *Методы:*
 - `saveProducts(products: IProduct[]): void` — сохраняет массив товаров.
@@ -208,8 +234,18 @@ export interface IValidResult {
 
 Корзина с товарами, которые пользователь выбрал для покупки.
 
+*Конструктор класса:*
+```typescript
+constructor(eventBroker: EventEmitter) {
+    this.eventBroker = eventBroker;
+  }
+```
+
+- `eventBroker: EventEmitter` - принимает инстанс брокера событий.
+
 *Поля:*
 - `items: IProduct[]` — массив товаров в корзине.
+- `eventBroker: EventEmitter` — брокер событий.
 
 *Методы:*
 - `getItems(): IProduct[]` — получаем список товаров в корзине.
@@ -224,15 +260,25 @@ export interface IValidResult {
 
 Класс для хранения и валидации данных покупателя.
 
+*Конструктор класса:*
+```typescript
+constructor(eventBroker: EventEmitter) {
+    this.eventBroker = eventBroker;
+  }
+```
+
+- `eventBroker: EventEmitter` - принимает инстанс брокера событий.
+
 *Поля:*
 - `payment: TPayment` — способ оплаты.
 - `email: string` — email покупателя.
 - `phone: string` — телефон покупателя.
 - `address: string` — адрес доставки.
+- `eventBroker: EventEmitter` — брокер событий.
 
 *Методы:*
 - `saveData(data: IBuyer): void` — сохраняет данные покупателя.
-- `getData(): IBuyer` — возвращает все данные покупателя.
+- `getData(fields?: (keyof IBuyer)[]): Partial<IBuyer>` — возвращает данные покупателя.
 - `clearData(): void` — очищает данные покупателя.
 - `validate(data: Partial<IBuyer>): IValidResult` — выполняет валидацию данных, возвращает результат проверки.
 
@@ -250,7 +296,9 @@ export interface IValidResult {
 
 *Методы класса:*
 - `render(data?: Partial<T>): HTMLElement` - Главный метод класса. Он принимает данные, которые необходимо отобразить в интерфейсе, записывает эти данные в поля класса и возвращает ссылку на DOM-элемент. Предполагается, что в классах, которые будут наследоваться от `Component` будут реализованы сеттеры для полей с данными, которые будут вызываться в момент вызова `render` и записывать данные в необходимые DOM элементы.  
-- `setImage(element: HTMLImageElement, src: string, alt?: string): void` - утилитарный метод для модификации DOM-элементов `<img>`
+- `setImage(element: HTMLImageElement, src: string, alt?: string): void` - утилитарный метод для модификации DOM-элементов `<img>`.
+- `setText(element: HTMLElement, text?: string): void` - утилитарный метод для модификации текстовых узлов в DOM-элементах.
+- `etDisabled(element: HTMLButtonElement, disabled: boolean, newText: string | null = null): void` - утилитарный метод для управления состоянием кнопок. Добавляет или удаляет атрибут `disabled` у DOM-элементов `<button>`, а также может задать новый текст кнопке.
 
 
 #### Класс Api
@@ -288,7 +336,6 @@ export interface IValidResult {
 Отвечает за коммуникацию с API сервера, используя базовый класс `Api`.
 
 *Конструктор класса:*
-
 ```typescript
 constructor(baseUrl: string, options: RequestInit = {})
 ```
@@ -308,105 +355,360 @@ constructor(baseUrl: string, options: RequestInit = {})
 
 Базовый класс для всех типов карточек товаров, предоставляющий основной набор методов.
 
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLElement) {
+  super(container);
+
+  const titleElement = this.container.querySelector('.card__title');
+  if (!(titleElement instanceof HTMLElement)) {
+    throw new Error('DOM-элемент для названия товара не найден');
+  }
+  this.titleElement = titleElement;
+
+  const priceElement = this.container.querySelector('.card__price');
+  if (!(priceElement instanceof HTMLElement)) {
+    throw new Error('DOM-элемент для стоимости товара не найден');
+  }
+  this.priceElement = priceElement;
+}
+```
+
+- `container: HTMLElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
+
+*Селекторы:*
+- `.card__title` - элемент названия товара.
+- `.card__price` - элемент цены товара.
+
+*Поля класса:*
+- `titleElement: HTMLElement` - DOM-элемент, в котором будет содержаться название товара.
+- `priceElement: HTMLElement` - DOM-элемент, в котором будет содержаться информация о стоимости товара.
+
 *Методы класса:*
-- `setCategory(category: string): void` - установка категории товара.
-- `setTitle(title: string): void` - установка названия товара.
-- `setImage(src: string, alt: string): void` - установка изображения товара.
-- `setPrice(price: number): void` - установка цены товара.
+- `set title(text: string)` - сеттер для установки названия товара.
+- `set price(value: number)` - сеттер для установки цены товара.
 
-#### Класс CardCatalog
+#### Класс CardFullInfo
 
-Карточка товара в каталоге. Наследуется от Card<IProduct>.
+Карточка товара в каталоге. Наследует от Card<IProduct>.
+
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLElement) {
+  super(container);
+
+  const categoryElement = this.container.querySelector('.card__category');
+  if (!(categoryElement instanceof HTMLElement)) {
+    throw new Error('DOM-элемент для категории товара не найден');
+  }
+  this.categoryElement = categoryElement;
+
+  const imageElement = this.container.querySelector('.card__image');
+  if (!(imageElement instanceof HTMLImageElement)) {
+    throw new Error('DOM-элемент для изображения товара не найден');
+  }
+  this.imageElement = imageElement;
+}
+```
+
+- `container: HTMLElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
 
 *Селекторы:*
 - `.card__category` - элемент категории товара.
-- `.card__title` - элемент названия товара.
 - `.card__image` - элемент изображения товара.
-- `.card__price` - элемент цены товара.
+
+*Поля:*
+- `button: HTMLButtonElement` - вся карточка товара (DOM-элемент `button`).
+- `categoryElement: HTMLElement` - DOM-элемент, в котором будет содержаться информация о категории товара.
+- `imageElement: HTMLImageElement` - DOM-элемент, в котором будет представлено изображение товара.
+
+*Методы класса:*
+- `set category(categoryName: string)` - сеттер для установки категории товара.
+- `set image(src: string)` - сеттер для установки изображения товара.
+- `setButtonHandler(handler: (event: MouseEvent) => void): void` - установка обработчика клика на карточку.
+
+
+#### Класс CardCatalog
+
+Карточка товара в каталоге. Наследует от CardFullInfo.
+
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLElement) {
+  super(container);
+
+  if (!(this.container instanceof HTMLButtonElement)) {
+      throw new Error('Контейнер не найден');
+  }
+  this.button = this.container;
+}
+```
+
+- `container: HTMLElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
+
+*Поля:*
+- `button: HTMLButtonElement` - вся карточка товара (DOM-элемент `button`).
 
 *Методы класса:*
 - `setButtonHandler(handler: (event: MouseEvent) => void): void` - установка обработчика клика на карточку.
 
 #### Класс CardPreview
 
-Карточка товара в режиме предпросмотра. Наследуется от Card<IProduct>.
+Карточка товара в режиме предпросмотра. Наследует от CardFullInfo.
+
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLElement) {
+  super(container);
+
+  const descriptionElement = this.container.querySelector('.card__text');
+  if (!(descriptionElement instanceof HTMLElement)) {
+    throw new Error('DOM-элемент для описания товара не найден');
+  }
+  this.descriptionElement = descriptionElement;
+
+  const button = this.container.querySelector('.card__button');
+  if (!(button instanceof HTMLButtonElement)) {
+    throw new Error('Кнопка  "В корзину" не найдена');
+  }
+  this.button = button;
+}
+```
+
+- `container: HTMLElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
 
 *Селекторы:*
-- `.card__category` - элемент категории товара.
-- `.card__title` - элемент названия товара.
-- `.card__image` - элемент изображения товара.
-- `.card__price` - элемент цены товара.
 - `.card__text` - элемент описания товара.
 - `.card__button` - кнопка "В корзину".
 
+*Поля:*
+- `descriptionElement: HTMLElement` - DOM-элемент с описанием карточки товара.
+- `button: HTMLButtonElement` - DOM-элемент кнопки "В корзину".
+
 *Методы:*
-- `setDescription(description: string): void` - установка описания товара.
+- `set description(text: string)` - сеттер для установки описания товара.
+- `setButtonText(text: string): void` - меняем текст кнопки в зависимости от того, в корзине он уже или нет.
 - `setButtonHandler(handler: (event: MouseEvent) => void): void` - установка обработчика кнопки "В корзину".
+- `setButtonDisabled(disabled: boolean, newText: string | null = null): void` - установка атрибута `disabled` кнопке "В корзину".
 
 #### Класс CardBasket
 
-Карточка товара в корзине. Наследуется от Card<IProduct>.
+Карточка товара в корзине. Наследует от Card<IProduct>.
+
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLElement) {
+  super(container);
+
+  const indexElement = this.container.querySelector('.basket__item-index');
+  if (!(indexElement instanceof HTMLElement)) {
+    throw new Error('DOM-элемент для порядкового номера товара в корзине не найден');
+  }
+  this.indexElement = indexElement;
+
+  const deleteButton = this.container.querySelector('.basket__item-delete');
+  if (!(deleteButton instanceof HTMLButtonElement)) {
+    throw new Error('Кнопка удаления товара из корзины не найдена');
+  }
+  this.deleteButton = deleteButton;
+}
+```
+
+- `container: HTMLElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
 
 *Селекторы:*
-- `.card__title` - элемент названия товара.
-- `.card__price` - элемент цены товара.
+- `.basket__item-index` - порядковый номер товара.
 - `.basket__item-delete` - кнопка удаления товара.
 
+*Поля:*
+- `indexElement: HTMLElement` - DOM-элемент с порядковым номером товара в корзине.
+- `deleteButton: HTMLButtonElement` - DOM-элемент кнопки для удаления товара из корзины.
+
 *Методы:*
-- `setIndex(index: number): void` - установка порядкового номера товара.
+- `set index(index: number)` - сеттер для установки порядкового номера товара.
 - `setDeleteHandler(handler: (event: MouseEvent) => void): void` - установка обработчика удаления товара.
 
 #### Класс Form
+Абстрактный базовый класс для всех форм, предоставляющий основной набор методов.
 
-Базовый класс для всех форм, предоставляющий основной набор методов.
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLElement) {
+  super(container);
+
+  if (!(this.container instanceof HTMLFormElement)) {
+      throw new Error('Контейнер не найден');
+  }
+  this.form = this.container;
+
+  const errorElement = this.container.querySelector('.form__errors');
+  if (!(errorElement instanceof HTMLElement)) {
+    throw new Error('DOM-элемент для ошибок не найден');
+  }
+  this.errorElement = errorElement;
+  
+  const submitButton = this.container.querySelector('button[type="submit"]');
+  if (!(submitButton instanceof HTMLButtonElement)) {
+    throw new Error('Кнопка отправки не найдена');
+  }
+  this.submitButton = submitButton;
+}
+```
+
+- `container: HTMLElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
+
+*Селекторы:*
+- `.form__errors` - ошибки валидации.
+- `button[type="submit"]` - кнопка отправки формы.
+
+*Поля:*
+- `form: HTMLFormElement` - DOM-элемент, ссылается на родителя для удобства работы.
+- `errorElement: HTMLElement` - DOM-элемент для публикации ошибок валидации.
+- `submitButton: HTMLButtonElement` - DOM-элемент кнопки отправки формы.
 
 *Методы:*
 - `setSubmitHandler(handler: (data: T) => void): void` - установка обработчика отправки формы.
-- `setInputHandler(handler: (field: keyof T, value: string) => void): void` - установка обработчика изменения полей.
-- `setValidations(errors: Partial<Record<keyof T, string>>): void` - установка ошибок валидации.
+- `setValidations(errors?: Partial<Record<keyof T, string>>): void` - установка/очистка ошибок валидации.
 - `setButtonState(disabled: boolean): void` - установка состояния кнопки отправки.
 - `getData(): T` - получение данных формы.
+- `abstract setInputHandler(handler: (field: keyof Partial<IBuyer>, value: string) => void): void` - абстрактный метод для установки обработчиков на изменение полей формы.
 
 #### Класс OrderForm
 
 Форма оформления заказа (способ оплаты и адрес). Наследует от Form<Partial<IBuyer>>.
 
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLElement) {
+  super(container);
+
+  const cardButton = this.container.querySelector('[name="card"]');
+  if (!(cardButton instanceof HTMLButtonElement)) {
+    throw new Error('Кнопка онлайн оплаты не найдена');
+  }
+  this.cardButton = cardButton;
+
+  const cashButton = this.container.querySelector('[name="cash"]');
+  if (!(cashButton instanceof HTMLButtonElement)) {
+    throw new Error('Кнопка оплаты наличными не найдена');
+  }
+  this.cashButton = cashButton;
+
+  const addressInput = this.container.querySelector('[name="address"]');
+  if (!(addressInput instanceof HTMLInputElement)) {
+    throw new Error('Поле для адреса не найдено');
+  }
+  this.addressInput = addressInput;
+}
+```
+
+- `container: HTMLElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
+
 *Селекторы:*
 - `[name="card"]` - кнопка "Онлайн" оплаты.
 - `[name="cash"]` - кнопка "При получении" оплаты.
 - `[name="address"]` - поле ввода адреса.
-- `.form__errors` - контейнер для ошибок.
+
+*Поля:*
+- `cardButton: HTMLButtonElement` - DOM-элемент кнопки онлайн-оплаты.
+- `cashButton: HTMLButtonElement` - DOM-элемент кнопки оплаты наличными.
+- `addressInput: HTMLInputElement` - DOM-элемент поля ввода адреса.
 
 *Методы:*
 - `setPaymentMethod(method: TPayment): void` - установка способа оплаты.
 - `setAddress(address: string): void` - установка адреса доставки.
+- `setInputHandler(handler: (field: keyof Partial<IBuyer>, value: string) => void): void` - установка обработчиков на изменение полей формы.
+- `getData(): Partial<IBuyer>` - получение данных, введенных пользователем.
 
 #### Класс ContactsForm
 
 Форма контактных данных. Наследует от Form<Partial<IBuyer>>.
 
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLElement) {
+  super(container);
+
+  const emailInput = this.container.querySelector('[name="email"]');
+  if (!(emailInput instanceof HTMLInputElement)) {
+    throw new Error('Поле для email не найдено');
+  }
+  this.emailInput = emailInput;
+
+  const phoneInput = this.container.querySelector('[name="phone"]');
+  if (!(phoneInput instanceof HTMLInputElement)) {
+    throw new Error('Поле для телефона не найдено');
+  }
+  this.phoneInput = phoneInput;
+}
+```
+
+- `container: HTMLElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
+
 *Селекторы:*
 - `[name="email"]` - поле ввода email.
 - `[name="phone"]` - поле ввода телефона.
-- `.form__errors` - контейнер для ошибок.
+
+*Поля:*
+- `emailInput: HTMLInputElement` - DOM-элемент поля ввода email.
+- `phoneInput: HTMLInputElement` - DOM-элемент поля ввода телефона.
 
 *Методы:*
 - `setEmail(email: string): void` - установка email.
 - `setPhone(phone: string): void` - установка телефона.
+- `setInputHandler(handler: (field: keyof Partial<IBuyer>, value: string) => void): void` - установка обработчиков на изменение полей формы.
+- `getData(): Partial<IBuyer>` - получение данных, введенных пользователем.
 
 #### Класс BasketView
 
 Представление корзины товаров.
 
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLElement, eventBroker: EventEmitter) {
+  super(container);
+  this.eventBroker = eventBroker;
+
+  const listElement = this.container.querySelector('.basket__list');
+  if (!(listElement instanceof HTMLElement)) {
+    throw new Error('Контейнер корзины не найден');
+  }
+  this.listElement = listElement;
+
+  const priceElement = this.container.querySelector('.basket__price');
+  if (!(priceElement instanceof HTMLElement)) {
+    throw new Error('DOM-элемент с общей стоимостью товаров не найден');
+  }
+  this.priceElement = priceElement;
+
+  const button = this.container.querySelector('.basket__button');
+  if (!(button instanceof HTMLButtonElement)) {
+    throw new Error('Кнопка оформления товара в корзине не найдена');
+  }
+  this.button = button;
+}
+```
+
+- `container: HTMLElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
+- `eventBroker: EventEmitter` - принимает инстанс брокера событий.
+
+*Поля:*
+- `listElement: HTMLElement` - DOM-элемент списка товаров.
+- `priceElement: HTMLElement` - DOM-элемент общей стоимости товаров в корзине.
+- `button: HTMLButtonElement` - DOM-элемент `button` кнопки оформления заказа в корзине.
+- `eventBroker: EventEmitter` — брокер событий.
+
 *Селекторы:*
 - `.basket__list` - список товаров в корзине.
-- `.basket__price` - элемент общей стоимости.
+- `.basket__price` - элемент общей стоимости товаров в корзине.
 - `.basket__button` - кнопка оформления заказа.
 
 *Методы:*
 - `setItems(items: IProduct[]): void` - установка списка товаров.
 - `setTotalPrice(price: number): void` - установка общей стоимости.
+- `setButtonDisabled(disabled: boolean): void` - установка атрибута `disabled` кнопке "В корзину".
 - `setOrderHandler(handler: (event: MouseEvent) => void): void` - установка обработчика оформления заказа.
+- `setDeleteHandler(handler: (productId: string) => void): void` - установка обработчика для удаления товара из корзины.
 
 #### Класс SuccessView
 
@@ -421,32 +723,38 @@ constructor(baseUrl: string, options: RequestInit = {})
 - `setTotalPrice(price: number): void` - установка суммы заказа.
 - `setCloseHandler(handler: (event: MouseEvent) => void): void` - установка обработчика закрытия.
 
-#### Класс GalleryView
-
-Представление галереи товаров.
-
-*Селекторы:*
-- `.gallery` - контейнер галереи.
-
-*Методы:*
-- `setProducts(products: IProduct[]): void` - установка списка товаров.
-- `setProductClickHandler(handler: (product: IProduct) => void): void` - установка обработчика клика на товар.
-
-#### Класс HeaderView
-
-Представление шапки сайта.
-
-*Селекторы:*
-- `.header__basket` - кнопка корзины.
-- `.header__basket-counter` - счетчик товаров в корзине.
-
-*Методы:*
-- `setBasketCount(count: number): void` - установка счетчика корзины.
-- `setBasketClickHandler(handler: (event: MouseEvent) => void): void` - установка обработчика клика на корзину.
-
 #### Класс ModalView
 
 Управление модальным окном. Не наследуется, самостоятельный компонент.
+
+*Конструктор класса:*
+```typescript
+constructor() {
+  const container = document.getElementById('modal-container');
+  if (!(container instanceof HTMLElement)) {
+    throw new Error('Контейнер модального окна не найден');
+  }
+  this.container = container;
+
+  const closeButton = this.container.querySelector('.modal__close');
+  if (!(closeButton instanceof HTMLButtonElement)) {
+    throw new Error('Кнопка закрытия модального окна не найдена');
+  }
+  this.closeButton = closeButton;
+
+
+  const contentElement = this.container.querySelector('.modal__content');
+  if (!(contentElement instanceof HTMLButtonElement)) {
+    throw new Error('DOM-элемент для содержимого модального окна не найден');
+  }
+  this.contentElement = contentElement;
+}
+```
+
+*Поля:*
+- `container: HTMLElement` - DOM-элемент контейнера модального окна.
+- `closeButton: HTMLButtonElement` - DOM-элемент кнопки `button` для закрытия модального окна.
+- `contentElement: HTMLElement` - DOM-элемент для контентной части модального окна.
 
 *Селекторы:*
 - `#modal-container` - контейнер модального окна.
@@ -458,3 +766,23 @@ constructor(baseUrl: string, options: RequestInit = {})
 - `close(): void` - закрытие модального окна.
 - `setCloseHandler(handler: (event: MouseEvent) => void): void` - установка обработчика закрытия.
 - `clearContent(): void` - очистка содержимого модального окна.
+
+## События приложения
+
+### События корзины (Cart):
+- `cart:changed` - изменение состава корзины (данные: `{ items: IProduct[] }`)
+- `cart:item-added` - добавление товара в корзину (данные: `{ product: IProduct, items: IProduct[] }`)
+- `cart:item-removed` - удаление товара из корзины (данные: `{ product: IProduct, items: IProduct[] }`)
+- `cart:cleared` - очистка корзины (данные: `{ items: IProduct[] }`)
+
+### События каталога (Catalog):
+- `catalog:changed` - изменение каталога товаров (данные: `{ items: IProduct[] }`)
+- `catalog:product-selected` - выбор товара для детального просмотра (данные: `{ product: IProduct }`)
+
+### События покупателя (Customer):
+- `customer:changed` - изменение данных покупателя (данные: `IBuyer`)
+- `customer:cleared` - очистка данных покупателя
+- `customer:validated` - валидация данных (данные: `{ isValid: boolean, errors: IValidErrors, data: Partial<IBuyer> }`)
+
+### События слоя представления корзины (BasketView):
+- `basket:item-remove` - удаление товара из корзины
