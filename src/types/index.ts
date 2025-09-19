@@ -52,3 +52,16 @@ export interface IValidResult {
 }
 
 export type TProductCategory = 'софт-скил' | 'хард-скил' | 'кнопка' | 'дополнительное' | 'другое';
+
+export interface IBasketProduct extends IProduct {
+  index: number;
+}
+
+export interface IBasketCount {
+  count: number;
+}
+
+export interface ITimer {
+  delay: number;
+  timeoutId: ReturnType<typeof setTimeout> | null;
+}

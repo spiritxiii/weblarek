@@ -131,7 +131,7 @@ interface IProducts {
 Интерфейс заказа, отправляемого на сервер:
 
 ```typescript
-export interface IOrderRequest extends IBuyer {
+interface IOrderRequest extends IBuyer {
   items: string[];
   total: number;
 }
@@ -162,7 +162,7 @@ interface IOrderResponse {
 Интерфейс, содержащий список полей с ошибками:
 
 ```typescript
-export interface IValidErrors {
+interface IValidErrors {
   payment?: string;
   email?: string;
   phone?: string;
@@ -181,7 +181,7 @@ export interface IValidErrors {
 Интерфейс, содержащий итоговый статус проверки валидации (true или false), а также список полей с ошибками, если они есть:
 
 ```typescript
-export interface IValidResult {
+interface IValidResult {
   isValid: boolean;
   errors: IValidErrors;
   data: Partial<IBuyer>;
@@ -202,6 +202,47 @@ type type TProductCategory = 'софт-скил' | 'хард-скил' | 'кно
 ```
 
 Текстовое поле, содержит одно значение из 4 вариантов.
+
+#### Товар в корзине
+
+Интерфейс товара в корзине. Наследует от IProduct, расширяя его список полей за счет порядкового номера товара.
+
+```typescript
+interface IBasketProduct extends IProduct {
+  index: number;
+}
+```
+
+*Поля интерфейса:*
+- `index: number` - числовое поле, содержит порядковый номер товара в корзине.
+
+#### Количество товаров в корзине
+
+Интерфейс показывает количество товаров в шапке сайта.
+
+```typescript
+interface IBasketCount {
+  count: number;
+}
+```
+
+*Поля интерфейса:*
+- `count: number` - числовое поле, хранит количество товаров в корзине.
+
+#### Таймер задержки
+
+Интерфейс для таймера задержки ввода данных в форме.
+
+```typescript
+interface ITimer {
+  delay: number;
+  timeoutId: ReturnType<typeof setTimeout> | null;
+}
+```
+
+*Поля интерфейса:*
+- `delay: number` - числовое поле, хранит количество милисекунд задержки.
+- `timeoutId: ReturnType<typeof setTimeout> | null` - поле для хранения айди таймера, может быть пустым.
 
 ### Модели данных
 
@@ -586,12 +627,14 @@ constructor(container: HTMLElement) {
   if (!(cardButton instanceof HTMLButtonElement)) {
     throw new Error('Кнопка онлайн оплаты не найдена');
   }
+  cardButton.addEventListener('click', () => this.setPaymentMethod('card'));
   this.cardButton = cardButton;
 
   const cashButton = this.container.querySelector('[name="cash"]');
   if (!(cashButton instanceof HTMLButtonElement)) {
     throw new Error('Кнопка оплаты наличными не найдена');
   }
+  cashButton.addEventListener('click', () => this.setPaymentMethod('cash'));
   this.cashButton = cashButton;
 
   const addressInput = this.container.querySelector('[name="address"]');
@@ -697,6 +740,7 @@ constructor(container: HTMLElement, eventBroker: EventEmitter) {
 - `priceElement: HTMLElement` - DOM-элемент общей стоимости товаров в корзине.
 - `button: HTMLButtonElement` - DOM-элемент `button` кнопки оформления заказа в корзине.
 - `eventBroker: EventEmitter` — брокер событий.
+- `isOpen: boolean = false` — поле булевого типа, содержит информацию о том, открыта ли корзина, по-умолчанию ложно.
 
 *Селекторы:*
 - `.basket__list` - список товаров в корзине.
@@ -708,7 +752,6 @@ constructor(container: HTMLElement, eventBroker: EventEmitter) {
 - `setTotalPrice(price: number): void` - установка общей стоимости.
 - `setButtonDisabled(disabled: boolean): void` - установка атрибута `disabled` кнопке "В корзину".
 - `setOrderHandler(handler: (event: MouseEvent) => void): void` - установка обработчика оформления заказа.
-- `setDeleteHandler(handler: (productId: string) => void): void` - установка обработчика для удаления товара из корзины.
 
 #### Класс SuccessView
 
@@ -729,7 +772,9 @@ constructor(container: HTMLElement, eventBroker: EventEmitter) {
 
 *Конструктор класса:*
 ```typescript
-constructor() {
+constructor(eventBroker: EventEmitter) {
+  this.eventBroker = eventBroker;
+  
   const container = document.getElementById('modal-container');
   if (!(container instanceof HTMLElement)) {
     throw new Error('Контейнер модального окна не найден');
@@ -742,19 +787,21 @@ constructor() {
   }
   this.closeButton = closeButton;
 
-
   const contentElement = this.container.querySelector('.modal__content');
-  if (!(contentElement instanceof HTMLButtonElement)) {
+  if (!(contentElement instanceof HTMLElement)) {
     throw new Error('DOM-элемент для содержимого модального окна не найден');
   }
   this.contentElement = contentElement;
 }
 ```
 
+- `eventBroker: EventEmitter` - принимает инстанс брокера событий.
+
 *Поля:*
 - `container: HTMLElement` - DOM-элемент контейнера модального окна.
 - `closeButton: HTMLButtonElement` - DOM-элемент кнопки `button` для закрытия модального окна.
 - `contentElement: HTMLElement` - DOM-элемент для контентной части модального окна.
+- `eventBroker: EventEmitter` - принимает инстанс брокера событий.
 
 *Селекторы:*
 - `#modal-container` - контейнер модального окна.
@@ -766,6 +813,38 @@ constructor() {
 - `close(): void` - закрытие модального окна.
 - `setCloseHandler(handler: (event: MouseEvent) => void): void` - установка обработчика закрытия.
 - `clearContent(): void` - очистка содержимого модального окна.
+
+#### Класс HeaderCartView
+
+Представление количества товаров в корзине, расположенное в шапке сайта.
+
+*Конструктор класса:*
+```typescript
+constructor(container: HTMLButtonElement) {
+    super(container);
+
+    this.basketButton = container;
+
+    const basketCounter = this.basketButton.querySelector('.header__basket-counter');
+    if (!(basketCounter instanceof HTMLElement)) {
+      throw new Error('В шапке сайта не найден счетчик товаров в корзине');
+    }
+    this.basketCounter = basketCounter;
+  }
+```
+
+- `container: HTMLButtonElement` - принимает ссылку на DOM элемент, который станет родителем для остальных (контейнер), передается конструктору родительского класса через super.
+
+*Поля:*
+- `basketButton: HTMLButtonElement` - DOM-элемент кнопки `button` корзины в шапке сайта.
+- `basketCounter: HTMLElement` - DOM-элемент с количеством товаров.
+
+*Селекторы:*
+- `.header__basket-counter` - количество товаров в корзине.
+
+*Методы:*
+- `set count(count: number)` - сеттер для установки количества товаров в корзине.
+- `setBasketClickHandler(handler: (event: MouseEvent) => void): void` - установка события по клику по кнопке корзины в шапке сайта.
 
 ## События приложения
 
@@ -786,3 +865,6 @@ constructor() {
 
 ### События слоя представления корзины (BasketView):
 - `basket:item-remove` - удаление товара из корзины
+
+### События слоя модального окна (ModalView):
+- `modal:close` - закрытие модального окна

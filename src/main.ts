@@ -1,6 +1,6 @@
 import './scss/styles.scss';
 
-import { IBuyer, IProduct, IOrderRequest, IValidResult } from './types/index';
+import { IBuyer, IProduct, IOrderRequest, IValidResult, ITimer } from './types/index';
 import { EventEmitter } from './components/base/Events';
 import { Catalog } from './components/Models/Catalog';
 import { Cart } from './components/Models/Cart';
@@ -14,6 +14,8 @@ import { ModalView } from './components/Views/ModalView';
 import { OrderForm } from './components/Views/forms/OrderForm';
 import { ContactsForm } from './components/Views/forms/ContactsForm';
 import { SuccessView } from './components/Views/SuccessView';
+import { HeaderCartView } from './components/Views/HeaderCartView';
+import { debounce } from './utils/utils';
 
 import { apiProducts } from './utils/data';
 
@@ -23,7 +25,26 @@ const apiClient = new ApiClient(API_URL);
 const catalogModel = new Catalog(eventEmitter);
 const cartModel = new Cart(eventEmitter);
 const customerModel = new Customer(eventEmitter);
-const modal = new ModalView();
+const modal = new ModalView(eventEmitter);
+
+// Таймер для debounce
+const timer: ITimer = {
+  delay: 800,
+  timeoutId: null
+};
+
+// START Инициализируем слой представления кнопки корзины в шапке сайта
+const headerCart = document.querySelector('.header__basket');
+if (!(headerCart instanceof HTMLButtonElement)) {
+  throw new Error('Кнопка корзины в шапке сайта не найдена');
+}
+const header = new HeaderCartView(headerCart);
+
+// Обработчик открытия корзины
+header.setBasketClickHandler(() => {
+  updateBasket();
+});
+// END Инициализируем слой представления кнопки корзины в шапке сайта
 
 // Обработка изменения каталога
 catalogModel.eventBroker.on('catalog:changed', () => {
@@ -91,27 +112,48 @@ modal.setCloseHandler(() => {
 
 // Обработка количества товаров в корзине в шапке сайта
 cartModel.eventBroker.on('cart:changed', () => {
-  const basketCounter = document.querySelector('.header__basket-counter');
+  header.count = cartModel.getTotalCount();
+});
 
-  if (!(basketCounter instanceof HTMLElement)) {
-    throw new Error('DOM-элемент для количества товаров в шапке сайта не найден');
-  }
-  basketCounter.textContent = cartModel.getTotalCount().toString();
-  
-  // Если открыта корзина, то обновляем её
-  const currentModalContent = document.querySelector('.modal__content');
-  if (currentModalContent && currentModalContent.querySelector('.basket')) {
-    showBasket();
+// START Инициализируем слой представления корзины
+const basketTemplate = document.getElementById('basket');
+if (!(basketTemplate instanceof HTMLTemplateElement)) {
+  throw new Error('Шаблон корзины не найден');
+}
+
+const basketElementClone = basketTemplate.content.cloneNode(true) as HTMLElement;
+const basketElement = basketElementClone.querySelector('.basket');
+
+if (!(basketElement instanceof HTMLElement)) {
+  throw new Error('Элемент корзины не найден');
+}
+const basketView = new BasketView(basketElement, eventEmitter);
+
+basketView.setOrderHandler(() => {
+  showForm('order', ['payment', 'address']);
+  basketView.isOpen = false;
+});
+
+// Обработка удаления товара из корзины
+cartModel.eventBroker.on('basket:item-remove', (data: {productId: string}) => {
+  const product = catalogModel.getProductById(data.productId);
+  if (product) {
+    cartModel.removeItem(product);
   }
 });
 
-// Обработчик открытия корзины
-const basketButton = document.querySelector('.header__basket');
-if (basketButton) {
-  basketButton.addEventListener('click', () => {
-    showBasket();
-  });
-}
+// Обработка закрытия модального окна
+cartModel.eventBroker.on('modal:close', () => {
+  basketView.isOpen = false;
+});
+
+// обработка изменения состава корзины
+cartModel.eventBroker.on('cart:changed', () => {
+  if (basketView.isOpen) {
+    updateBasket();
+  }
+});
+// END Инициализируем слой представления корзины
 
 initializeApp();
 
@@ -133,39 +175,16 @@ async function initializeApp(): Promise<void> {
 }
 
 /**
- * Отображает корзину товаров в модальном окне
+ * Обновляет корзину товаров в модальном окне
  * @returns {void}
  */
-function showBasket(): void {
-  const basketTemplate = document.getElementById('basket');
-  if (!(basketTemplate instanceof HTMLTemplateElement)) {
-    throw new Error('Шаблон корзины не найден');
-  }
-
-  const basketElementClone = basketTemplate.content.cloneNode(true) as HTMLElement;
-  const basketElement = basketElementClone.querySelector('.basket');
-
-  if (!(basketElement instanceof HTMLElement)) {
-    throw new Error('Элемент корзины не найден');
-  }
-  const basketView = new BasketView(basketElement, eventEmitter);
-
+function updateBasket(): void {
   basketView.setTotalPrice(cartModel.getTotalPrice());
   basketView.setItems(cartModel.getItems());
-
-  basketView.setOrderHandler(() => {
-    showForm('order', ['payment', 'address']);
-  });
-
-  basketView.setDeleteHandler((productId: string) => {
-    const product = catalogModel.getProductById(productId);
-    if (product) {
-      cartModel.removeItem(product);
-    }
-  });
-
   basketView.setButtonDisabled(cartModel.getTotalCount() === 0);
-  modal.open(basketElement);
+  basketView.isOpen = true;
+
+  modal.open(basketElement as HTMLElement);
 }
 
 /**
@@ -194,7 +213,12 @@ function showForm(templateName: string, customerParams?: (keyof IBuyer)[]): void
 
   form.setInputHandler((field, value) => {
     customerModel.saveData({ [field]: value });
-    customerModel.validate(customerModel.getData(customerParams));
+
+    const debounceValidate = debounce(() => {
+      customerModel.validate(customerModel.getData(customerParams))
+    }, timer);
+    
+    debounceValidate();
   });
 
   form.setSubmitHandler((event: SubmitEvent) => {
@@ -215,7 +239,11 @@ function showForm(templateName: string, customerParams?: (keyof IBuyer)[]): void
     let isFilled: boolean = false;
     isFilled = customerParams.some(param => customerData.hasOwnProperty(param) && customerData[param]);
     if (isFilled) {
-      customerModel.validate(customerData);
+      const debounceValidate = debounce(() => {
+        customerModel.validate(customerData)
+      }, timer);
+
+      debounceValidate();
     }
   }
 

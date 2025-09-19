@@ -25,10 +25,6 @@ export class CardBasket extends Card<IProduct> {
     this.setText(this.indexElement, index.toString());
   }
 
-  setIndex(index: number): void {
-    this.setText(this.indexElement, index.toString());
-  }
-
   setDeleteHandler(handler: (event: MouseEvent) => void): void {
     this.deleteButton.addEventListener('click', handler);
   }

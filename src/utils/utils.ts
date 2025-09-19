@@ -1,4 +1,4 @@
-import { IValidErrors } from '../types/index';
+import { IValidErrors, ITimer } from '../types/index';
 
 export function pascalToKebab(value: string): string {
     return value.replace(/([a-z0–9])([A-Z])/g, "$1-$2").toLowerCase();
@@ -144,4 +144,22 @@ export function showValidErrors(data: IValidErrors): void {
   Object.entries(data).forEach(item => {
     console.log(`Поле ${item[0]}: `, item[1]);
   });
+}
+
+// Добавляет задержку при выполнении фунции
+export function debounce(
+  func: () => void,
+  params: ITimer
+): () => void {
+  
+  return () => {
+    if (params.timeoutId) {
+      clearTimeout(params.timeoutId);
+    }
+    
+    params.timeoutId = setTimeout(() => {
+      func();
+      params.timeoutId = null;
+    }, params.delay);
+  };
 }

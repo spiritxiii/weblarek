@@ -13,12 +13,14 @@ export class OrderForm extends Form<Partial<IBuyer>> {
     if (!(cardButton instanceof HTMLButtonElement)) {
       throw new Error('Кнопка онлайн оплаты не найдена');
     }
+    cardButton.addEventListener('click', () => this.setPaymentMethod('card'));
     this.cardButton = cardButton;
 
     const cashButton = this.container.querySelector('[name="cash"]');
     if (!(cashButton instanceof HTMLButtonElement)) {
       throw new Error('Кнопка оплаты наличными не найдена');
     }
+    cashButton.addEventListener('click', () => this.setPaymentMethod('cash'));
     this.cashButton = cashButton;
 
     const addressInput = this.container.querySelector('[name="address"]');

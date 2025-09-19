@@ -1,13 +1,14 @@
 import { Component } from '../base/Component';
-import { IProduct } from '../../types/index';
+import { IProduct, IBasketProduct } from '../../types/index';
 import { CardBasket } from '../Views/cards/CardBasket';
 import { EventEmitter } from '../base/Events';
 
-export class BasketView extends Component<IProduct[]> {
+export class BasketView extends Component<IBasketProduct[]> {
   private listElement: HTMLElement;
   private priceElement: HTMLElement;
   private button: HTMLButtonElement;
   public eventBroker: EventEmitter;
+  public isOpen: boolean = false;
 
   constructor(container: HTMLElement, eventBroker: EventEmitter) {
     super(container);
@@ -45,8 +46,8 @@ export class BasketView extends Component<IProduct[]> {
       }
       
       const card = new CardBasket(itemElement);
-      card.render(item);
-      card.setIndex(index + 1);
+      const basketProduct: IBasketProduct = { ...item, index: index + 1 };
+      card.render(basketProduct);
       
       // Обработчик удаления товара
       card.setDeleteHandler(() => {
@@ -67,11 +68,5 @@ export class BasketView extends Component<IProduct[]> {
 
   setOrderHandler(handler: (event: MouseEvent) => void): void {
     this.button.addEventListener('click', handler);
-  }
-
-  setDeleteHandler(handler: (productId: string) => void): void {
-    this.eventBroker.on('basket:item-remove', (data: { productId: string }) => {
-      handler(data.productId);
-    });
   }
 }
